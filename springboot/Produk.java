@@ -1,13 +1,13 @@
 package springboot;
 
-public class ProdukSayur {
+public class Produk {
     private String nama;
     private double harga;
     private int stok;
 
     //method
     //constructor
-    public ProdukSayur(String nama, double harga, int stok) {
+    public Produk(String nama, double harga, int stok) {
         this.nama = nama;
         this.harga = harga;
         this.stok = stok;
@@ -28,17 +28,13 @@ public class ProdukSayur {
         return stok;
     }
 
-    //setter
-    public void setNama(String nama) {
-        this.nama = nama;
+    //getinfo
+    public void showInfo() {
+        System.out.println(nama + " - Rp" + harga + " (" + stok + " tersedia)");
     }
 
-    public void setHarga(double harga) {
-        this.harga = harga;
-    }
-
-    public int decStok() {
-        this.stok = this.stok - 1;
+    public int decStok(int jml) {
+        this.stok = this.stok - jml;
         return this.stok;
     }
 
