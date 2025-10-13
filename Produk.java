@@ -1,4 +1,4 @@
-package springboot;
+
 
 public class Produk {
     private String nama;
