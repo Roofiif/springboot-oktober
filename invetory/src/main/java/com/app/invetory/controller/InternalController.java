@@ -22,13 +22,13 @@ public class InternalController {
     @GetMapping
     public List<Item> getInventory(){
         return service.getAllItems();
-    }
+    } 
 
     //post data inventory
     @PostMapping
     public Item addItem(@RequestBody Item item){
         return service.addItem(item);
-    }
+    } 
 
     //getById
     @GetMapping("/{id}")
