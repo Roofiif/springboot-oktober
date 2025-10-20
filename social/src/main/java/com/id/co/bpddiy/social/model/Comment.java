@@ -8,30 +8,37 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity untuk Comment dengan relationship ke User dan Post
+ * Relasi: Comment (N) -> User (1), Comment (N) -> Post (1)
+ */
 @Entity
 @Table(name = "comments", indexes = {
         @Index(name = "idx_comment_post", columnList = "post_id"),
-        @Index(name = "idx_comment_author", columnList = "author_id")
+        @Index(name = "idx_comment_author", columnList = "author_id"),
+        @Index(name = "idx_comment_created_at", columnList = "created_at"),
+        @Index(name = "idx_comment_status", columnList = "status")
 })
 public class Comment {
-    public Comment(Long id, String content, LocalDateTime editedAt, LocalDateTime createdAt, LocalDateTime updatedAt, Post post, User author) {
-        this.id = id;
-        this.content = content;
-        this.editedAt = editedAt;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.post = post;
-        this.author = author;
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Konten komentar harus diisi")
-    @Size(min = 1, max = 1000, message = "Karakter komentar minimal 1 dan maksimal 1000")
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @NotBlank(message = "Konten komentar tidak boleh kosong")
+    @Size(min = 1, max = 1000, message = "Komentar harus antara 1-1000 karakter")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CommentStatus status = CommentStatus.PENDING;
+
+    @Column(name = "like_count", nullable = false)
+    private Integer likeCount = 0;
+
+    @Column(name = "is_edited", nullable = false)
+    private Boolean isEdited = false;
 
     @Column(name = "edited_at")
     private LocalDateTime editedAt;
@@ -44,14 +51,57 @@ public class Comment {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Relasi Many-to-One dengan User (author)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false, foreignKey = @ForeignKey(name = "fk_comment_post"))
-    private Post post;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false, foreignKey = @ForeignKey(name = "fk_comment_user_author"))
+    @JoinColumn(name = "author_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_comment_author"))
     private User author;
 
+    // Relasi Many-to-One dengan Post
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_comment_post"))
+    private Post post;
+
+    // Enum untuk Status Comment
+    public enum CommentStatus {
+        PENDING,    // Menunggu moderasi
+        APPROVED,   // Disetujui
+        REJECTED,   // Ditolak
+        DELETED     // Dihapus
+    }
+
+    // Constructors
+    public Comment() {}
+
+    public Comment(String content, User author, Post post) {
+        this.content = content;
+        this.author = author;
+        this.post = post;
+    }
+
+    // Method untuk menandai comment sudah di-edit
+    public void markAsEdited() {
+        this.isEdited = true;
+        this.editedAt = LocalDateTime.now();
+    }
+
+    // Method untuk approve comment
+    public void approve() {
+        this.status = CommentStatus.APPROVED;
+    }
+
+    // Method untuk reject comment
+    public void reject() {
+        this.status = CommentStatus.REJECTED;
+    }
+
+    // Method untuk soft delete comment
+    public void delete() {
+        this.status = CommentStatus.DELETED;
+    }
+
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -66,6 +116,33 @@ public class Comment {
 
     public void setContent(String content) {
         this.content = content;
+        if (this.createdAt != null) { // Jika bukan comment baru
+            markAsEdited();
+        }
+    }
+
+    public CommentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CommentStatus status) {
+        this.status = status;
+    }
+
+    public Integer getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(Integer likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public Boolean getIsEdited() {
+        return isEdited;
+    }
+
+    public void setIsEdited(Boolean isEdited) {
+        this.isEdited = isEdited;
     }
 
     public LocalDateTime getEditedAt() {
@@ -92,19 +169,19 @@ public class Comment {
         this.updatedAt = updatedAt;
     }
 
-    public Post getPost() {
-        return post;
-    }
-
-    public void setPost(Post post) {
-        this.post = post;
-    }
-
     public User getAuthor() {
         return author;
     }
 
     public void setAuthor(User author) {
         this.author = author;
+    }
+
+    public Post getPost() {
+        return post;
+    }
+
+    public void setPost(Post post) {
+        this.post = post;
     }
 }
