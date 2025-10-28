@@ -128,4 +128,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("UPDATE User u SET u.updatedAt = CURRENT_TIMESTAMP WHERE u.id = :userId")
     void updateLastActivity(@Param("userId") Long userId);
+
+    // Pagination with search
+    Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            String username, String email, Pageable pageable);
+
+    // Pagination with search and role filter
+    @Query("SELECT u FROM User u WHERE " +
+            "(LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "u.role = :role")
+    Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseAndRole(
+            @Param("search") String search1,
+            @Param("search") String search2,
+            @Param("role") User.Role role,
+            Pageable pageable);
 }
